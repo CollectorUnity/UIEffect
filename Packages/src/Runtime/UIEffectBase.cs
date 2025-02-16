@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Profiling;
 using UnityEngine.UI;
 using UnityEditor;
-using TMPro;
 
 [assembly: InternalsVisibleTo("UIEffect")]
 [assembly: InternalsVisibleTo("Coffee.UIEffect.Editor")]
@@ -88,31 +87,13 @@ namespace Coffee.UIEffects
             if (!MaterialRepository.Valid(hash, _material))
             {
                 Profiler.BeginSample("(UIE)[UIEffect] GetModifiedMaterial > Get or create material");
-                MaterialRepository.Get(hash, ref _material, x =>
+                MaterialRepository.Get(hash, ref _material, x => new Material(x)
                 {
-                    // Check if this is a TextMeshPro material
-                    bool isTMP = x.shader.name.StartsWith("TextMeshPro/") || graphic is TMP_Text;
-                    var newMaterial = new Material(x)
-                    {
-                        hideFlags = HideFlags.HideAndDontSave
-                    };
-
-                    if (isTMP)
-                    {
-                        // For TextMeshPro, keep the original shader and use material property variants
-                        newMaterial.shader = x.shader;
-                        newMaterial.CopyPropertiesFromMaterial(x);
-                    }
-                    else
-                    {
-                        // For regular UI, use the UIEffect shader variant
-                        newMaterial.shader = UIEffectProjectSettings.shaderRegistry.FindOptionalShader(x.shader,
-                            "(UIEffect)",
-                            "Hidden/{0} (UIEffect)",
-                            "Hidden/UI/Default (UIEffect)");
-                    }
-                    
-                    return newMaterial;
+                    shader = UIEffectProjectSettings.shaderRegistry.FindOptionalShader(x.shader,
+                        "(UIEffect)",
+                        "Hidden/{0} (UIEffect)",
+                        "Hidden/UI/Default (UIEffect)"),
+                    hideFlags = HideFlags.HideAndDontSave
                 }, baseMaterial);
                 Profiler.EndSample();
             }
